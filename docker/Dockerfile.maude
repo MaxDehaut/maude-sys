@@ -1,0 +1,29 @@
+# Use Ubuntu as the base image
+FROM ubuntu:latest
+
+# Set the working directory
+WORKDIR /app
+
+# Prevent dpkg errors
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install curl, wget and unzip
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Retrieve the latest Maude version from GitHub, download and extract
+RUN MAUDE_LOCATION=$(curl -sSL -I https://github.com/SRI-CSL/Maude/releases/latest | awk -F ': ' '/^location:/{print $2}' | tr -d '\r') && \
+    MAUDE_VERSION=$(basename $MAUDE_LOCATION) && \
+    MAUDE_URL="https://github.com/SRI-CSL/Maude/releases/download/${MAUDE_VERSION}/Maude-linux.zip" && \
+    wget -q -O maude.zip $MAUDE_URL && \
+    unzip maude.zip -d maude && \
+    rm maude.zip
+
+# Add the Maude binaries to the system's PATH
+ENV PATH="/app/maude/Linux64:${PATH}"
+
+# Set the default command to run Maude
+CMD ["/app/maude/Linux64/maude.linux64"]
